@@ -6,53 +6,88 @@ import {
   hideLoader,
 } from "./js/render-functions.js";
 
-import iziToast from "izitoast";
-import "izitoast/dist/css/iziToast.min.css";
-
 const form = document.querySelector("#search-form");
+const loadMoreBtn = document.querySelector(".load-more");
 
-form.addEventListener("submit", event => {
-  event.preventDefault();
+let query = "";
+let page = 1;
+let totalPages = 0;
 
-  const query = event.target.elements['search-text'].value.trim();
+form.addEventListener("submit", onSearch);
+loadMoreBtn.addEventListener("click", onLoadMore);
 
-  if ( query === "") {
-    iziToast.warning({
-      title: "Увага",
-      message: "Введіть пошукове слово!",
-      position: "topRight",
-    });
-    return;
-  }
 
+async function onSearch(e) {
+  e.preventDefault();
+
+  const formData = new FormData(e.currentTarget);
+  query = formData.get("search-text").trim();
+
+
+  if (!query) return;
+
+  page = 1;
   clearGallery();
+  loadMoreBtn.classList.add("is-hidden");
   showLoader();
 
-  getImagesByQuery(query)
-    .then(data => {
-      hideLoader();
+  try {
+    const data = await getImagesByQuery(query, page);
 
-      const images = data.hits;
+    if (!data || data.hits.length === 0) {
+      alert("Нічого не знайдено!");
+      return;
+    }
 
-      if (images.length === 0) {
-        iziToast.info({
-          title: "Немає результатів",
-          message: `Зображень за запитом "${query}" не знайдено.`,
-          position: "topRight",
-        });
-        return;
-      }
+    totalPages = Math.ceil(data.totalHits / 15);
+    createGallery(data.hits);
 
-      createGallery(images);
-    })
-    .catch(() => {
-      hideLoader();
-      iziToast.error({
-        title: "Помилка",
-        message: "Сталася помилка при завантаженні даних.",
-        position: "topRight",
-      });
-    });
-});
+    if (page < totalPages) {
+      loadMoreBtn.classList.remove("is-hidden");
+    }
+  } catch (error) {
+    console.error("Помилка при завантаженні зображень:", error);
+  } finally {
+    hideLoader();
+  }
+}
+
+async function onLoadMore() {
+  page += 1;
+  showLoader();
+
+  try {
+    const data = await getImagesByQuery(query, page);
+
+    if (data && data.hits.length > 0) {
+      createGallery(data.hits);
+    }
+
+    if (page >= totalPages) {
+      loadMoreBtn.classList.add("is-hidden");
+      alert("Це були всі результати за даним запитом");
+    }
+  } catch (error) {
+    console.error("Помилка при завантаженні наступної сторінки:", error);
+  } finally {
+    hideLoader();
+  }
+}
+
+    
+// addEventListener('click', ()=>{
+// getList()
+// .then((list)=> renderHTML(list))
+// .catch((error)=>console.log(error))
+// })
 
 
+// addEventListener('click', async event =>{
+
+
+
+// const list = await getList()
+// renderHTML(list)
+
+
+// 
