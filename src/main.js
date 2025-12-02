@@ -16,37 +16,59 @@ let totalPages = 0;
 form.addEventListener("submit", onSearch);
 loadMoreBtn.addEventListener("click", onLoadMore);
 
+function hideLoadMoreBtn() {
+  loadMoreBtn.classList.add("is-hidden");
+}
+
+function showLoadMoreBtn() {
+  loadMoreBtn.classList.remove("is-hidden");
+}
+
+function smoothScrollAfterRender() {
+  const gallery = document.querySelector(".gallery");
+
+  if (!gallery) return;
+
+  const cardHeight = gallery.getBoundingClientRect().height / 15;
+
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: "smooth",
+  });
+}
 
 async function onSearch(e) {
   e.preventDefault();
 
-  const formData = new FormData(e.currentTarget);
-  query = formData.get("search-text").trim();
-
+  query = e.currentTarget.elements["search-text"].value.trim();
 
   if (!query) return;
 
   page = 1;
   clearGallery();
-  loadMoreBtn.classList.add("is-hidden");
+  hideLoadMoreBtn();
   showLoader();
 
   try {
     const data = await getImagesByQuery(query, page);
 
-    if (!data || data.hits.length === 0) {
-      alert("Нічого не знайдено!");
+    if (!data || !data.hits.length) {
+      alert("Sorry, no images found. Please try another query.");
       return;
     }
 
-    totalPages = Math.ceil(data.totalHits / 15);
     createGallery(data.hits);
+    totalPages = Math.ceil(data.totalHits / 15);
 
     if (page < totalPages) {
-      loadMoreBtn.classList.remove("is-hidden");
+      showLoadMoreBtn();
+    } else {
+      hideLoadMoreBtn();
+      alert("We're sorry, but you've reached the end of search results.");
     }
+
   } catch (error) {
-    console.error("Помилка при завантаженні зображень:", error);
+    console.error("Помилка при завантаженні:", error);
   } finally {
     hideLoader();
   }
@@ -55,24 +77,29 @@ async function onSearch(e) {
 async function onLoadMore() {
   page += 1;
   showLoader();
-
+  hideLoadMoreBtn(); 
   try {
     const data = await getImagesByQuery(query, page);
 
-    if (data && data.hits.length > 0) {
+    if (data && data.hits.length) {
       createGallery(data.hits);
+      smoothScrollAfterRender();
     }
 
-    if (page >= totalPages) {
-      loadMoreBtn.classList.add("is-hidden");
-      alert("Це були всі результати за даним запитом");
+    if (page < totalPages) {
+      showLoadMoreBtn();
+    } else {
+      hideLoadMoreBtn();
+      alert("We're sorry, but you've reached the end of search results.");
     }
+
   } catch (error) {
-    console.error("Помилка при завантаженні наступної сторінки:", error);
+    console.error("Помилка при завантаженні:", error);
   } finally {
     hideLoader();
   }
 }
+
 
     
 // addEventListener('click', ()=>{

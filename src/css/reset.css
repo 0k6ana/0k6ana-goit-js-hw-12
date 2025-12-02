@@ -24,7 +24,10 @@ a {
 }
 
 button {
-  cursor: pointer;
+cursor: pointer;
+display: block;
+margin: 0 auto;
+margin-top: 15px;
 }
 
 img {
@@ -43,6 +46,9 @@ body {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
+  display: block;
+  margin: 0 auto;
+  margin-bottom: 15px;
 }
 
 .gallery {
@@ -99,19 +105,23 @@ body {
   z-index: 9999;          
 }
 
-.is-hidden {
+.is-hidden, .is-hidden-load {
   display: none;
 }
 
 .load-more{
-display: flex;
+display: block;
+margin: 0 auto;
 align-items: center;
 justify-content: center;
 flex-direction: row;
 gap: 10px;
 background: #4e75ff;
 color: floralwhite;
+width: 125px;
+height: 40px;
 }
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
